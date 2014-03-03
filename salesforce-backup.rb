@@ -36,12 +36,19 @@ class Result
 end
 
 
-class Error 
+class SfError
   attr_accessor :internal_server_error, :data
+
   def initialize(args)
     args.each {|k,v| instance_variable_set("@#{k}",v)}
   end
+
+  def inspect
+    puts data
+  end
+  alias_method :to_s, :inspect
 end
+
 
 def login
   http = Net::HTTP.new('login.salesforce.com', 443)
@@ -72,13 +79,9 @@ def login
   if resp.code == '200'
     xmldoc = Document.new(resp.body)
     return Result.new({:xmldoc => xmldoc})
-  else 
-    return Error.new({:internal_server_error => resp, data => data})
-  end 
-end
-
-def error(error)
-  puts error.data
+  else
+    raise SfError.new({:internal_server_error => resp, :data => data})
+  end
 end
 
 def download_index(login) 
@@ -190,14 +193,12 @@ def download_file(login, url, expected_size)
 end 
 
 begin
-result = login
-
-if result.is_a?Error
-  error(result)
-else
-  url = download_index(result)  
-  expected_size = get_download_size(result, url)
-  download_file(result, url, expected_size)
+  begin
+    result = login
+    url = download_index(result)
+    expected_size = get_download_size(result, url)
+    download_file(result, url, expected_size)
+  rescue Exception => e
+    puts e
+  end
 end
-end
-
