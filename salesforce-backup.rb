@@ -18,11 +18,23 @@ EMAIL_ADDRESS_TO = "admin@myorg.com"
 SMTP_HOST = "localhost"
 
 class Result
-  attr_accessor :server_url, :session_id, :org_id
-  def initialize(args)
-    args.each {|k,v| instance_variable_set("@#{k}",v)}
+  def initialize(xmldoc)
+    @xmldoc = xmldoc
+  end
+
+  def server_url
+    @server_url ||= XPath.first(xmldoc, '//result/serverUrl/text()')
+  end
+
+  def session_id
+    @session_id ||= XPath.first(xmldoc, '//result/sessionId/text()')
+  end
+
+  def org_id
+    @org_id ||= XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
   end
 end
+
 
 class Error 
   attr_accessor :internal_server_error, :data
@@ -59,10 +71,7 @@ def login
 
   if resp.code == '200'
     xmldoc = Document.new(resp.body)
-    server_url= XPath.first(xmldoc, '//result/serverUrl/text()')
-    session_id = XPath.first(xmldoc, '//result/sessionId/text()')
-    org_id = XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
-    return Result.new({:server_url => server_url, :session_id => session_id, :org_id => org_id})
+    return Result.new({:xmldoc => xmldoc})
   else 
     return Error.new({:internal_server_error => resp, data => data})
   end 
