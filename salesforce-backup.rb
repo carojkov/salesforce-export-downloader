@@ -19,10 +19,16 @@ SMTP_HOST = "localhost"
 
 class Result
   attr_accessor :server_url, :session_id, :org_id
+  def initialize(args)
+    args.each {|k,v| instance_variable_set("@#{k}",v)}
+  end
 end
 
 class Error 
   attr_accessor :internal_server_error, :data
+  def initialize(args)
+    args.each {|k,v| instance_variable_set("@#{k}",v)}
+  end
 end
 
 def login
@@ -56,19 +62,9 @@ def login
     server_url= XPath.first(xmldoc, '//result/serverUrl/text()')
     session_id = XPath.first(xmldoc, '//result/sessionId/text()')
     org_id = XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
-    
-    result = Result.new
-    result.server_url = server_url
-    result.session_id = session_id
-    result.org_id = org_id
-
-    return result
+    return Result.new({:server_url => server_url, :session_id => session_id, :org_id => org_id})
   else 
-     error = Error.new
-     error.internal_server_error = resp
-     error.data = data
-    
-     return error
+    return Error.new({:internal_server_error => resp, data => data})
   end 
 end
 
