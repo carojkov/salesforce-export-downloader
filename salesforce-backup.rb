@@ -50,6 +50,32 @@ class SfError
 end
 
 
+
+
+### Helpers ###
+
+def http(host=SALES_FORCE_SITE, port=443)
+    h = Net::HTTP.new(host, port)
+    h.use_ssl = true
+    h
+end
+
+def headers(login)
+  {
+    'Cookie'         => "oid=#{login.org_id.value}; sid=#{login.session_id.value}",
+    'X-SFDC-Session' => login.session_id.value
+  }
+end
+
+def file_name
+  @file_name ||= "salesforce-#{Date::today.strftime('%Y-%m-%d')}.ZIP"
+end
+
+
+
+
+### Salesforce interactions ###
+
 def login
   path = '/services/Soap/u/28.0'
 
@@ -82,28 +108,41 @@ def login
   end
 end
 
-def http(host=SALES_FORCE_SITE, port=443)
-    h = Net::HTTP.new(host, port)
-    h.use_ssl = true
-    h
-end
-
-def headers(login)
-  {
-    'Cookie'         => "oid=#{login.org_id.value}; sid=#{login.session_id.value}",
-    'X-SFDC-Session' => login.session_id.value
-  }
-end
-
 def download_index(login)
   path = '/servlet/servlet.OrgExport'
   data = http.post(path, nil, headers(login))
   data.body.strip
 end
 
-def file_name
-  @file_name ||= "salesforce-#{Date::today.strftime('%Y-%m-%d')}.ZIP"
+def get_download_size(login, url)
+  data = http.head(url, headers(login))
+  data['Content-Length'].to_i
 end
+
+def download_file(login, url, expected_size)
+  f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
+  size = 0
+  begin
+    http.request_get(url, headers(login)) do |resp|
+      resp.read_body do |segment|
+        f.write(segment)
+        size = size + segment.size
+      end
+    end
+  ensure
+    f.close()
+  end
+  if size == expected_size
+    email_success("#{DATA_DIRECTORY}/#{file_name}", size)
+  else
+    email_failure(url, expected_size, resp.code)
+  end
+end
+
+
+
+
+### Email ###
 
 def email_success(file_name, size)
   subject = "Salesforce backup successfully downloaded"
@@ -125,38 +164,16 @@ Subject: #{subject}
 
 #{data}
 END
-
   Net::SMTP.start(SMTP_HOST) do |smtp|
-    smtp.send_message message, EMAIL_ADDRESS_TO,
-                               EMAIL_ADDRESS_FROM
+    smtp.send_message message, EMAIL_ADDRESS_TO, EMAIL_ADDRESS_FROM
   end
 end
 
-def get_download_size(login, url)
-  data = http.head(url, headers(login))
-  data['Content-Length'].to_i
-end
 
-def download_file(login, url, expected_size)
-  f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
-  size = 0
-  begin
-    http.request_get(url, headers(login)) do |resp|
-      resp.read_body do |segment|
-        f.write(segment)
-        size = size + segment.size
-      end
-    end
-  ensure
-    f.close()
-  end
 
-  if size == expected_size
-    email_success("#{DATA_DIRECTORY}/#{file_name}", size)
-  else
-    email_failure(url, expected_size, resp.code)
-  end
-end
+
+
+
 
 
 begin
