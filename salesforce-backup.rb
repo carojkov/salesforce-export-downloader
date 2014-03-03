@@ -23,15 +23,15 @@ class Result
   end
 
   def server_url
-    @server_url ||= XPath.first(xmldoc, '//result/serverUrl/text()')
+    @server_url ||= XPath.first(@xmldoc, '//result/serverUrl/text()')
   end
 
   def session_id
-    @session_id ||= XPath.first(xmldoc, '//result/sessionId/text()')
+    @session_id ||= XPath.first(@xmldoc, '//result/sessionId/text()')
   end
 
   def org_id
-    @org_id ||= XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
+    @org_id ||= XPath.first(@xmldoc, '//result/userInfo/organizationId/text()')
   end
 end
 
@@ -102,7 +102,7 @@ def login
 
   if resp.code == '200'
     xmldoc = Document.new(resp.body)
-    return Result.new({:xmldoc => xmldoc})
+    return Result.new(xmldoc)
   else
     raise SfError.new({:internal_server_error => resp, :data => data})
   end
