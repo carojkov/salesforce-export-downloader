@@ -62,11 +62,11 @@ class Error
 end
 
 def login
-  http = Net::HTTP.new('login.salesforce.com', 443);
+  http = Net::HTTP.new('login.salesforce.com', 443)
   http.use_ssl = true
   path = '/services/Soap/u/28.0'
 
-  data = <<-EOF
+  inital_data = <<-EOF
 <?xml version="1.0" encoding="utf-8" ?>
 <env:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -85,18 +85,18 @@ def login
     'SOAPAction' => 'login'
   }
 
-  resp, data = http.post(path, data, headers)
+  resp = http.post(path, inital_data, headers)
 
   if resp.code == '200'
-    xmldoc = Document.new(data)
+    xmldoc = Document.new(resp.body)
     server_url= XPath.first(xmldoc, '//result/serverUrl/text()')
     session_id = XPath.first(xmldoc, '//result/sessionId/text()')
     org_id = XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
     
     result = Result.new
-    result.set_server_url = server_url;
-    result.set_session_id = session_id;
-    result.set_org_id = org_id;
+    result.set_server_url = server_url
+    result.set_session_id = session_id
+    result.set_org_id = org_id
 
     return result
   else 
@@ -113,22 +113,19 @@ def error(error)
 end
 
 def download_index(login) 
-  http = Net::HTTP.new(SALES_FORCE_SITE, 443);
+  http = Net::HTTP.new(SALES_FORCE_SITE, 443)
 
   http.use_ssl = true
   path = '/servlet/servlet.OrgExport'
-  cookie = "oid=\"@oid\"; sid=\"@sid\""
-  cookie = cookie.sub(/@oid/, login.org_id.value)
-  cookie = cookie.sub(/@sid/, login.session_id.value)
-
+  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
   headers = {
     'Cookie' => cookie, 
     'X-SFDC-Session' => login.session_id.value
   }
 
-  resp, data = http.post(path, nil, headers);
+  data = http.post(path, nil, headers)
 
-  return data.to_s.strip
+  return data.body.strip
 end
 
 def make_file_name() 
@@ -175,40 +172,35 @@ END
 end
 
 def get_download_size(login, url)
-  http = Net::HTTP.new(SALES_FORCE_SITE, 443);
+  http = Net::HTTP.new(SALES_FORCE_SITE, 443)
   http.use_ssl = true
   path = url
-  cookie = "oid=\"@oid\"; sid=\"@sid\""
-  cookie = cookie.sub(/@oid/, login.org_id.value)
-  cookie = cookie.sub(/@sid/, login.session_id.value)
+  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
 
   headers = {
     'Cookie' => cookie, 
     'X-SFDC-Session' => login.session_id.value
   }
 
-  resp, data = http.head(path, headers);
+  data = http.head(path, headers)
   
-  return resp['Content-Length'].to_i
+  return data['Content-Length'].to_i
 end
 
 def download_file(login, url, expected_size)
   http = Net::HTTP.new(SALES_FORCE_SITE, 443)
   http.use_ssl = true
   path = url
-
-  cookie = "oid=\"@oid\"; sid=\"@sid\""
-  cookie = cookie.sub(/@oid/, login.org_id.value)
-  cookie = cookie.sub(/@sid/, login.session_id.value)
+  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
 
   headers = {
     'Cookie' => cookie, 
     'X-SFDC-Session' => login.session_id.value
   }
   
-  file_name = make_file_name;
+  file_name = make_file_name
   f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
-  size = 0;
+  size = 0
 
   begin
     http.request_get(path, headers) do |resp|      
