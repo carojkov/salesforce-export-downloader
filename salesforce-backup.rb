@@ -133,7 +133,7 @@ end
 def get_download_size(login, url)
   cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
   headers = {
-    'Cookie' => cookie,
+    'Cookie'         => cookie,
     'X-SFDC-Session' => login.session_id.value
   }
   data = http.head(url, headers)
@@ -143,7 +143,7 @@ end
 def download_file(login, url, expected_size)
   cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
   headers = {
-    'Cookie' => cookie,
+    'Cookie'         => cookie,
     'X-SFDC-Session' => login.session_id.value
   }
   f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
@@ -156,7 +156,7 @@ def download_file(login, url, expected_size)
       end
     end
   ensure
-      f.close()
+    f.close()
   end
 
   if size == expected_size
