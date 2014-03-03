@@ -100,20 +100,8 @@ def download_index(login)
   return data.body.strip
 end
 
-def make_file_name() 
-  date = Date::today
-  
-  name = "salesforce-" + date.year.to_s + "-"
-
-  if date.month < 9
-    name = name + "0" + date.month.to_s
-  else
-    name = name + date.month.to_s
-  end
-
-  name = name + "-" + date.day.to_s + ".ZIP"
-
-  return name
+def file_name
+  @file_name ||= "salesforce-#{Date::today.strftime('%Y-%m-%d')}.ZIP"
 end
 
 def email_success(file_name, size)
@@ -169,8 +157,6 @@ def download_file(login, url, expected_size)
     'Cookie' => cookie, 
     'X-SFDC-Session' => login.session_id.value
   }
-  
-  file_name = make_file_name
   f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
   size = 0
 
