@@ -51,8 +51,6 @@ end
 
 
 def login
-  http = Net::HTTP.new('login.salesforce.com', 443)
-  http.use_ssl = true
   path = '/services/Soap/u/28.0'
 
   inital_data = <<-EOF
@@ -74,7 +72,7 @@ def login
     'SOAPAction' => 'login'
   }
 
-  resp = http.post(path, inital_data, headers)
+  resp = http('login.salesforce.com').post(path, inital_data, headers)
 
   if resp.code == '200'
     xmldoc = Document.new(resp.body)
@@ -84,19 +82,20 @@ def login
   end
 end
 
-def download_index(login) 
-  http = Net::HTTP.new(SALES_FORCE_SITE, 443)
+def http(host=SALES_FORCE_SITE, port=443)
+    h = Net::HTTP.new(host, port)
+    h.use_ssl = true
+    h
+end
 
-  http.use_ssl = true
+def download_index(login)
   path = '/servlet/servlet.OrgExport'
   cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
   headers = {
-    'Cookie' => cookie, 
+    'Cookie' => cookie,
     'X-SFDC-Session' => login.session_id.value
   }
-
   data = http.post(path, nil, headers)
-
   return data.body.strip
 end
 
@@ -126,42 +125,31 @@ Subject: #{subject}
 END
 
   Net::SMTP.start(SMTP_HOST) do |smtp|
-    smtp.send_message message, EMAIL_ADDRESS_TO, 
+    smtp.send_message message, EMAIL_ADDRESS_TO,
                                EMAIL_ADDRESS_FROM
   end
 end
 
 def get_download_size(login, url)
-  http = Net::HTTP.new(SALES_FORCE_SITE, 443)
-  http.use_ssl = true
-  path = url
   cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
-
   headers = {
-    'Cookie' => cookie, 
+    'Cookie' => cookie,
     'X-SFDC-Session' => login.session_id.value
   }
-
-  data = http.head(path, headers)
-  
+  data = http.head(url, headers)
   return data['Content-Length'].to_i
 end
 
 def download_file(login, url, expected_size)
-  http = Net::HTTP.new(SALES_FORCE_SITE, 443)
-  http.use_ssl = true
-  path = url
   cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
-
   headers = {
-    'Cookie' => cookie, 
+    'Cookie' => cookie,
     'X-SFDC-Session' => login.session_id.value
   }
   f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
   size = 0
-
   begin
-    http.request_get(path, headers) do |resp|      
+    http.request_get(url, headers) do |resp|
       resp.read_body do |segment|
         f.write(segment)
         size = size + segment.size
@@ -170,13 +158,14 @@ def download_file(login, url, expected_size)
   ensure
       f.close()
   end
-    
+
   if size == expected_size
     email_success("#{DATA_DIRECTORY}/#{file_name}", size)
-  else 
-    email_failure(url, expected_size, resp.code)    
+  else
+    email_failure(url, expected_size, resp.code)
   end
-end 
+end
+
 
 begin
   begin
