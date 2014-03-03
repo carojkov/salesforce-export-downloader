@@ -18,47 +18,11 @@ EMAIL_ADDRESS_TO = "admin@myorg.com"
 SMTP_HOST = "localhost"
 
 class Result
-  def server_url
-    @server_url
-  end
-
-  def set_server_url=(new_server_url)
-    @server_url = new_server_url
-  end
-
-  def session_id
-    @session_id
-  end
-
-  def set_session_id=(new_session_id)
-    @session_id = new_session_id
-  end
-
-  def org_id
-    @org_id
-  end
-
-  def set_org_id=(new_org_id)
-    @org_id = new_org_id
-  end
+  attr_accessor :server_url, :session_id, :org_id
 end
 
 class Error 
-  def internal_server_error
-    @internal_server_error
-  end
-
-  def set_internal_server_error=(server_error)
-    @internal_server_error = server_error
-  end
-
-  def data
-    @data
-  end
-
-  def set_data=(data)
-    @data = data
-  end
+  attr_accessor :internal_server_error, :data
 end
 
 def login
@@ -94,15 +58,15 @@ def login
     org_id = XPath.first(xmldoc, '//result/userInfo/organizationId/text()')
     
     result = Result.new
-    result.set_server_url = server_url
-    result.set_session_id = session_id
-    result.set_org_id = org_id
+    result.server_url = server_url
+    result.session_id = session_id
+    result.org_id = org_id
 
     return result
   else 
      error = Error.new
-     error.set_internal_server_error = resp
-     error.set_data = data
+     error.internal_server_error = resp
+     error.data = data
     
      return error
   end 
