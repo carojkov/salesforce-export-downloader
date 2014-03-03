@@ -67,12 +67,12 @@ def login
 </env:Envelope>
   EOF
 
-  headers = {
+  initial_headers = {
     'Content-Type' => 'text/xml; charset=UTF-8',
     'SOAPAction' => 'login'
   }
 
-  resp = http('login.salesforce.com').post(path, inital_data, headers)
+  resp = http('login.salesforce.com').post(path, inital_data, initial_headers)
 
   if resp.code == '200'
     xmldoc = Document.new(resp.body)
@@ -88,15 +88,17 @@ def http(host=SALES_FORCE_SITE, port=443)
     h
 end
 
-def download_index(login)
-  path = '/servlet/servlet.OrgExport'
-  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
-  headers = {
-    'Cookie' => cookie,
+def headers(login)
+  {
+    'Cookie'         => "oid=#{login.org_id.value}; sid=#{login.session_id.value}",
     'X-SFDC-Session' => login.session_id.value
   }
-  data = http.post(path, nil, headers)
-  return data.body.strip
+end
+
+def download_index(login)
+  path = '/servlet/servlet.OrgExport'
+  data = http.post(path, nil, headers(login))
+  data.body.strip
 end
 
 def file_name
@@ -131,25 +133,15 @@ END
 end
 
 def get_download_size(login, url)
-  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
-  headers = {
-    'Cookie'         => cookie,
-    'X-SFDC-Session' => login.session_id.value
-  }
-  data = http.head(url, headers)
-  return data['Content-Length'].to_i
+  data = http.head(url, headers(login))
+  data['Content-Length'].to_i
 end
 
 def download_file(login, url, expected_size)
-  cookie = "oid=#{login.org_id.value}; sid=#{login.session_id.value}"
-  headers = {
-    'Cookie'         => cookie,
-    'X-SFDC-Session' => login.session_id.value
-  }
   f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
   size = 0
   begin
-    http.request_get(url, headers) do |resp|
+    http.request_get(url, headers(login)) do |resp|
       resp.read_body do |segment|
         f.write(segment)
         size = size + segment.size
