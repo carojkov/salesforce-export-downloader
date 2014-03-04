@@ -5,17 +5,11 @@ require 'net/https'
 require 'rexml/document'
 require 'date'
 require 'net/smtp'
+require 'yaml'
+
 
 include REXML
 
-SALES_FORCE_USER_NAME="foo@myorg.com"
-SALES_FORCE_PASSWD_AND_SEC_TOKEN="s3cr3txxxxxx" # your salesforce password and security token
-
-SALES_FORCE_SITE = "?.salesforce.com" # replace ? with your instancename
-DATA_DIRECTORY = "/archive/salesforce"
-EMAIL_ADDRESS_FROM = "admin@myorg.com"
-EMAIL_ADDRESS_TO = "admin@myorg.com"
-SMTP_HOST = "localhost"
 
 class Result
   def initialize(xmldoc)
@@ -54,7 +48,7 @@ end
 
 ### Helpers ###
 
-def http(host=SALES_FORCE_SITE, port=443)
+def http(host=@sales_force_site, port=443)
     h = Net::HTTP.new(host, port)
     h.use_ssl = true
     h
@@ -93,8 +87,8 @@ def login
     xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
   <env:Body>
     <n1:login xmlns:n1="urn:partner.soap.sforce.com">
-      <n1:username>#{SALES_FORCE_USER_NAME}</n1:username>
-      <n1:password>#{SALES_FORCE_PASSWD_AND_SEC_TOKEN}</n1:password>
+      <n1:username>#{@sales_force_user_name}</n1:username>
+      <n1:password>#{@sales_force_passwd_and_sec_token}</n1:password>
     </n1:login>
   </env:Body>
 </env:Envelope>
@@ -135,7 +129,7 @@ def download_file(login, url, expected_size)
   size = 0
   fn = file_name(url)
   puts "Downloading #{fn}..."
-  f = open("#{DATA_DIRECTORY}/#{fn}", "w")
+  f = open("#{@data_directory}/#{fn}", "w")
   begin
     http.request_get(url, headers(login)) do |resp|
       resp.read_body do |segment|
@@ -188,14 +182,14 @@ end
 
 def email(subject, data)
 message = <<END
-From: Admin <#{EMAIL_ADDRESS_FROM}>
-To: Admin <#{EMAIL_ADDRESS_TO}>
+From: Admin <#{@email_address_from}>
+To: Admin <#{@email_address_to}>
 Subject: #{subject}
 
 #{data}
 END
-  Net::SMTP.start(SMTP_HOST) do |smtp|
-    smtp.send_message message, EMAIL_ADDRESS_TO, EMAIL_ADDRESS_FROM
+  Net::SMTP.start(@smtp_host) do |smtp|
+    smtp.send_message message, @email_address_to, @email_address_from
   end
 end
 
@@ -204,6 +198,9 @@ end
 
 
 begin
+  config_file_path = File.join(File.dirname(__FILE__), 'config.yml')
+  config_hash = YAML.load_file(config_file_path)
+  config_hash.each { |name, value| instance_variable_set("@#{name}", value) }
   result = login
   urls = download_index(result).split("\n")
   puts "  All urls:"
@@ -216,13 +213,13 @@ begin
       puts "Working on: #{url}"
       expected_size = get_download_size(result, url)
       puts "Expected size: #{expected_size}"
-      if File.size?("#{DATA_DIRECTORY}/#{fn}") == expected_size
+      if File.size?("#{@data_directory}/#{fn}") == expected_size
         puts "File #{fn} exists and is the right size. Skipping."
       else
-        email_success("#{DATA_DIRECTORY}/#{file_name}", expected_size)
         download_file(result, url, expected_size)
+        email_success("#{@data_directory}/#{file_name}", expected_size)
       end
-  rescue Exception => e
+    rescue Exception => e
       if retry_count < 5
         retry_count += 1
         puts "Error: #{e}"
@@ -231,8 +228,8 @@ begin
       else
         email_failure(url, e.to_s)
       end
+    end
   end
-end
   puts "Done!"
 end
 
