@@ -148,10 +148,7 @@ def download_file(login, url, expected_size)
   ensure
     f.close()
   end
-  if size == expected_size
-    email_success("#{DATA_DIRECTORY}/#{file_name}", size)
-  else
-    email_failure(url, expected_size, resp.code)
+  raise "Size didn't match. Expected: #{expected_size} Actual: #{size}" unless size == expected_size
   end
 
 def print_progress(size, expected_size, interval, previous_printed_interval, interval_type=:seconds)
@@ -183,9 +180,9 @@ def email_success(file_name, size)
   email(subject, data)
 end
 
-def email_failure(url, expected_size, code)
+def email_failure(url, error_msg)
   subject = "Salesforce backup download failed"
-  data = "Failed to download #{url} of size #{expected_size} due to #{code}"
+  data = "Failed to download #{url}. #{error_msg}"
   email(subject, data)
 end
 
@@ -206,16 +203,44 @@ end
 
 
 
-
-
-
 begin
   begin
     result = login
-    url = download_index(result)
-    expected_size = get_download_size(result, url)
-    download_file(result, url, expected_size)
+    urls = download_index(result).split("\n")
   rescue Exception => e
+binding.pry
     puts e
   end
+  puts "  All urls:"
+  puts urls
+  puts ''
+  urls.each do |url|
+    fn = file_name(url)
+    retry_count = 0
+    begin
+      puts "Working on: #{url}"
+    expected_size = get_download_size(result, url)
+      puts "Expected size: #{expected_size}"
+      if File.size?("#{DATA_DIRECTORY}/#{fn}") == expected_size
+        puts "File #{fn} exists and is the right size. Skipping."
+      else
+    download_file(result, url, expected_size)
+        email_success("#{DATA_DIRECTORY}/#{file_name}", expected_size)
+      end
+  rescue Exception => e
+      if retry_count < 5
+        retry_count += 1
+        puts "Error: #{e}"
+        puts "Retrying (retry_count of 5)..."
+        retry
+      else
+        email_failure(url, e.to_s)
+      end
+  end
 end
+  puts "Done!"
+end
+
+
+
+
