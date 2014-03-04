@@ -36,15 +36,15 @@ class Result
 end
 
 
-class SfError
-  attr_accessor :internal_server_error, :data
+class SfError < Exception
+  attr_accessor :resp
 
-  def initialize(args)
-    args.each {|k,v| instance_variable_set("@#{k}",v)}
+  def initialize(resp)
+    @resp = resp
   end
 
   def inspect
-    puts data
+    puts resp.body
   end
   alias_method :to_s, :inspect
 end
@@ -104,7 +104,7 @@ def login
     xmldoc = Document.new(resp.body)
     return Result.new(xmldoc)
   else
-    raise SfError.new({:internal_server_error => resp, :data => data})
+    raise SfError.new(resp)
   end
 end
 
