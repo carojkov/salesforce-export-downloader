@@ -204,13 +204,8 @@ end
 
 
 begin
-  begin
-    result = login
-    urls = download_index(result).split("\n")
-  rescue Exception => e
-binding.pry
-    puts e
-  end
+  result = login
+  urls = download_index(result).split("\n")
   puts "  All urls:"
   puts urls
   puts ''
