@@ -67,8 +67,10 @@ def headers(login)
   }
 end
 
-def file_name
-  @file_name ||= "salesforce-#{Date::today.strftime('%Y-%m-%d')}.ZIP"
+def file_name(url=nil)
+  datestamp = Date::today.strftime('%Y-%m-%d')
+  uid_string = url ? "-#{/.*fileName=(.*)\.ZIP.*/.match(url)[1]}" : ''
+  "salesforce-#{datestamp}#{uid_string}.ZIP"
 end
 
 
@@ -120,8 +122,9 @@ def get_download_size(login, url)
 end
 
 def download_file(login, url, expected_size)
-  f = open("#{DATA_DIRECTORY}/#{file_name}", "w")
   size = 0
+  fn = file_name(url)
+  f = open("#{DATA_DIRECTORY}/#{fn}", "w")
   begin
     http.request_get(url, headers(login)) do |resp|
       resp.read_body do |segment|
