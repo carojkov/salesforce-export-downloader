@@ -79,6 +79,7 @@ end
 ### Salesforce interactions ###
 
 def login
+  puts "Logging in..."
   path = '/services/Soap/u/28.0'
 
   inital_data = <<-EOF
@@ -111,12 +112,14 @@ def login
 end
 
 def download_index(login)
+  puts "Downloading index..."
   path = '/servlet/servlet.OrgExport'
   data = http.post(path, nil, headers(login))
   data.body.strip
 end
 
 def get_download_size(login, url)
+  puts "Getting download size..."
   data = http.head(url, headers(login))
   data['Content-Length'].to_i
 end
@@ -124,6 +127,7 @@ end
 def download_file(login, url, expected_size)
   size = 0
   fn = file_name(url)
+  puts "Downloading #{fn}..."
   f = open("#{DATA_DIRECTORY}/#{fn}", "w")
   begin
     http.request_get(url, headers(login)) do |resp|
@@ -131,6 +135,7 @@ def download_file(login, url, expected_size)
         f.write(segment)
         size = size + segment.size
       end
+      puts "\nFinished downloading #{fn}!"
     end
   ensure
     f.close()
