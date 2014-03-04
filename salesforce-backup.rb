@@ -73,6 +73,10 @@ def file_name(url=nil)
   "salesforce-#{datestamp}#{uid_string}.ZIP"
 end
 
+def progress_percentage(current, total)
+  ((current.to_f/total.to_f)*(100.to_f)).to_i
+end
+
 
 
 
@@ -125,6 +129,9 @@ def get_download_size(login, url)
 end
 
 def download_file(login, url, expected_size)
+  last_printed_value = nil
+  printing_interval = 20
+  interval_type = :seconds
   size = 0
   fn = file_name(url)
   puts "Downloading #{fn}..."
@@ -134,6 +141,7 @@ def download_file(login, url, expected_size)
       resp.read_body do |segment|
         f.write(segment)
         size = size + segment.size
+        last_printed_value = print_progress(size, expected_size, printing_interval, last_printed_value, interval_type)
       end
       puts "\nFinished downloading #{fn}!"
     end
@@ -145,6 +153,23 @@ def download_file(login, url, expected_size)
   else
     email_failure(url, expected_size, resp.code)
   end
+
+def print_progress(size, expected_size, interval, previous_printed_interval, interval_type=:seconds)
+  percent_file_complete = ((size.to_f/expected_size.to_f)*(100.to_f)).to_i
+  case interval_type
+    when :percentage
+    previous_printed_interval ||= 0
+    current_value = percent_file_complete
+    when :seconds
+    previous_printed_interval ||= Time.now.to_i
+    current_value = Time.now.to_i
+  end
+  next_interval = previous_printed_interval + interval
+  if current_value >= next_interval
+    puts "#{percent_file_complete}% complete (#{size} of #{expected_size})"
+    return next_interval
+  end
+  return previous_printed_interval
 end
 
 
