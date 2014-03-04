@@ -149,7 +149,7 @@ def download_file(login, url, expected_size)
     f.close()
   end
   raise "Size didn't match. Expected: #{expected_size} Actual: #{size}" unless size == expected_size
-  end
+end
 
 def print_progress(size, expected_size, interval, previous_printed_interval, interval_type=:seconds)
   percent_file_complete = ((size.to_f/expected_size.to_f)*(100.to_f)).to_i
@@ -214,13 +214,13 @@ begin
     retry_count = 0
     begin
       puts "Working on: #{url}"
-    expected_size = get_download_size(result, url)
+      expected_size = get_download_size(result, url)
       puts "Expected size: #{expected_size}"
       if File.size?("#{DATA_DIRECTORY}/#{fn}") == expected_size
         puts "File #{fn} exists and is the right size. Skipping."
       else
-    download_file(result, url, expected_size)
         email_success("#{DATA_DIRECTORY}/#{file_name}", expected_size)
+        download_file(result, url, expected_size)
       end
   rescue Exception => e
       if retry_count < 5
