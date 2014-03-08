@@ -208,9 +208,8 @@ begin
   puts urls
   puts ''
 
-  dirname = File.dirname(@data_directory)
-  unless File.directory?(dirname)
-    FileUtils.mkdir_p(dirname)
+  unless File.directory?(@data_directory)
+    FileUtils.mkdir_p(@data_directory)
   end
 
   urls.each do |url|
