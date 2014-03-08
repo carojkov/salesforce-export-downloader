@@ -6,6 +6,7 @@ require 'rexml/document'
 require 'date'
 require 'net/smtp'
 require 'yaml'
+require 'fileutils'
 
 
 include REXML
@@ -206,6 +207,12 @@ begin
   puts "  All urls:"
   puts urls
   puts ''
+
+  dirname = File.dirname(@data_directory)
+  unless File.directory?(dirname)
+    FileUtils.mkdir_p(dirname)
+  end
+
   urls.each do |url|
     fn = file_name(url)
     file_path = "#{@data_directory}/#{fn}"
