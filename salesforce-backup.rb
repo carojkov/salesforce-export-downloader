@@ -124,9 +124,9 @@ def get_download_size(login, url)
 end
 
 def download_file(login, url, expected_size)
+  printing_interval = 10
+  interval_type = :percentage
   last_printed_value = nil
-  printing_interval = 20
-  interval_type = :seconds
   size = 0
   fn = file_name(url)
   puts "Downloading #{fn}..."
@@ -158,7 +158,8 @@ def print_progress(size, expected_size, interval, previous_printed_interval, int
   end
   next_interval = previous_printed_interval + interval
   if current_value >= next_interval
-    puts "#{percent_file_complete}% complete (#{size} of #{expected_size})"
+    datestamp = Time.now.strftime('%Y-%m-%d-%H-%M-%S')
+    puts "#{datestamp}: #{percent_file_complete}% complete (#{size} of #{expected_size})"
     return next_interval
   end
   return previous_printed_interval
