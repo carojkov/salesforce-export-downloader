@@ -208,16 +208,18 @@ begin
   puts ''
   urls.each do |url|
     fn = file_name(url)
+    file_path = "#{@data_directory}/#{fn}"
     retry_count = 0
     begin
       puts "Working on: #{url}"
       expected_size = get_download_size(result, url)
       puts "Expected size: #{expected_size}"
-      if File.size?("#{@data_directory}/#{fn}") == expected_size
+      fs = File.size?(file_path)
+      if fs && fs == expected_size
         puts "File #{fn} exists and is the right size. Skipping."
       else
         download_file(result, url, expected_size)
-        email_success("#{@data_directory}/#{file_name}", expected_size)
+        email_success(file_path, expected_size)
       end
     rescue Exception => e
       if retry_count < 5
