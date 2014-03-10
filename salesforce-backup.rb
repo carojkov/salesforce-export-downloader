@@ -158,8 +158,8 @@ def print_progress(size, expected_size, interval, previous_printed_interval, int
   end
   next_interval = previous_printed_interval + interval
   if current_value >= next_interval
-    datestamp = Time.now.strftime('%Y-%m-%d-%H-%M-%S')
-    puts "#{datestamp}: #{percent_file_complete}% complete (#{size} of #{expected_size})"
+    timestamp = Time.now.strftime('%Y-%m-%d-%H-%M-%S')
+    puts "#{timestamp}: #{percent_file_complete}% complete (#{size} of #{expected_size})"
     return next_interval
   end
   return previous_printed_interval
