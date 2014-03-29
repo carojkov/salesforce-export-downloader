@@ -1,0 +1,7 @@
+sales_force_user_name: "foo@myorg.com"
+sales_force_passwd_and_sec_token: "s3cr3txxxxxx" # your salesforce password and security token
+sales_force_site: "?.salesforce.com" # replace ? with your instancename
+data_directory: "/archive/salesforce"
+email_address_from: "admin@myorg.com"
+email_address_to: "admin@myorg.com"
+smtp_host: "localhost"
