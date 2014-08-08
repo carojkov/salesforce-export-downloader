@@ -191,7 +191,7 @@ Subject: #{subject}
 #{data}
 END
   Net::SMTP.start(@smtp_host) do |smtp|
-    smtp.send_message message, @email_address_to, @email_address_from
+    smtp.send_message message, @email_address_from, @email_address_to
   end
 end
 
