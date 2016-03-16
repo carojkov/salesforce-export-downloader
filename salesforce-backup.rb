@@ -130,7 +130,7 @@ def download_file(login, url, expected_size)
   size = 0
   fn = file_name(url)
   puts "Downloading #{fn}..."
-  f = open("#{@data_directory}/#{fn}", "w")
+  f = open("#{@data_directory}/#{fn}", "wb")
   begin
     http.request_get(url, headers(login)) do |resp|
       resp.read_body do |segment|
