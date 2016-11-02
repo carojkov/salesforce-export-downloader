@@ -8,9 +8,7 @@ require 'net/smtp'
 require 'yaml'
 require 'fileutils'
 
-
 include REXML
-
 
 class Result
   def initialize(xmldoc)
@@ -30,7 +28,6 @@ class Result
   end
 end
 
-
 class SfError < Exception
   attr_accessor :resp
 
@@ -43,9 +40,6 @@ class SfError < Exception
   end
   alias_method :to_s, :inspect
 end
-
-
-
 
 ### Helpers ###
 
@@ -71,9 +65,6 @@ end
 def progress_percentage(current, total)
   ((current.to_f/total.to_f)*(100.to_f)).to_i
 end
-
-
-
 
 ### Salesforce interactions ###
 
@@ -165,9 +156,6 @@ def print_progress(size, expected_size, interval, previous_printed_interval, int
   return previous_printed_interval
 end
 
-
-
-
 ### Email ###
 
 def email_success(file_name, size)
@@ -194,10 +182,6 @@ END
     smtp.send_message message, @email_address_from, @email_address_to
   end
 end
-
-
-
-
 
 begin
   config_file_path = File.join(File.dirname(__FILE__), 'config.yml')
