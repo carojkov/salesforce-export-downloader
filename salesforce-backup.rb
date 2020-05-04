@@ -87,7 +87,6 @@ def login
   </env:Body>
 </env:Envelope>
   EOF
-  puts inital_data
 
   initial_headers = {
     'Content-Type' => 'text/xml; charset=UTF-8',
