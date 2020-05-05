@@ -72,6 +72,8 @@ def login
   puts "Logging in..."
   path = '/services/Soap/u/28.0'
 
+  pwd_token_encoded = @sales_force_passwd_and_sec_token.gsub(/&(?!amp;)/,'&amp;')
+
   inital_data = <<-EOF
 <?xml version="1.0" encoding="utf-8" ?>
 <env:Envelope xmlns:xsd="http://www.w3.org/2001/XMLSchema"
@@ -80,7 +82,7 @@ def login
   <env:Body>
     <n1:login xmlns:n1="urn:partner.soap.sforce.com">
       <n1:username>#{@sales_force_user_name}</n1:username>
-      <n1:password>#{@sales_force_passwd_and_sec_token}</n1:password>
+      <n1:password>#{pwd_token_encoded}</n1:password>
     </n1:login>
   </env:Body>
 </env:Envelope>
